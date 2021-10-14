@@ -4,6 +4,7 @@
  *  Created on: Oct 13, 2021
  *      Author: Tyler Hendricks-- 5 Guys One Captsone Project
  */
+#include "IRSensor.h"
 
 void initIRSensor(){
     //TODO Implement this function
