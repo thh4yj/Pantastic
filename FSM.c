@@ -2,7 +2,7 @@
  * FSM.c
  *
  *  Created on: Oct 13, 2021
- *      Author: tyler
+ *      Author: Tyler Hendricks -- 5 Guys One Capstone Project
  */
 #include "FSM.h"
 
@@ -49,20 +49,7 @@ FSMStateType NextStateFunction(FSMStateType CurrentState, uint16_t temperature)
 
 void OutPutFunction(FSMStateType CurrentState)
 {
-    //if the current state is stop then the LED will turn off.
-    if(CurrentState == Stop){
-        LaunchPad_LED(LED_OFF);
-    }
-    else{
-        H = PulseBuf[i]; //set how long the LED should be on
-        L = 10000-H; //set how long the LED should be off
-     LaunchPad_LED(LED_ON); //turn on the LED
-     SysTick_Wait1us(H); //Wait high
-     LaunchPad_LED(LED_OFF); //Turn off the LED
-     SysTick_Wait1us(L); //Wait low
-     i = (i+1)%100; //increment or reset i to prevent an index out of bounds error and to keep the cycle running
 
-    }
 
 }
 
