@@ -14,7 +14,7 @@ FSMStateType NextStateFunction(FSMStateType CurrentState, uint16_t temperature)
     FSMStateType NextState = CurrentState; //init NextState so that it is not undefined.
 
     if(CurrentState == Init){
-
+        NextState = FirstTempCheck;
     }
     else if(CurrentState == MCUSleep){
         NextState = MCUWake;
@@ -72,6 +72,7 @@ FSMStateType NextStateFunction(FSMStateType CurrentState, uint16_t temperature)
 
 void OutputFunction(FSMStateType CurrentState)
 {
+    //TODO Implement OutputFunction
 
 
 }
