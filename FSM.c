@@ -1,71 +1,137 @@
 /*
+ *  ===================================================================================
+                    ______                _                _    _
+                    | ___ \              | |              | |  (_)
+                    | |_/ /  __ _  _ __  | |_   __ _  ___ | |_  _   ___
+                    |  __/  / _` || '_ \ | __| / _` |/ __|| __|| | / __|
+                    | |    | (_| || | | || |_ | (_| |\__ \| |_ | || (__
+                    \_|     \__,_||_| |_| \__| \__,_||___/ \__||_| \___|
+
+ *  ===================================================================================
+ *  UVA ECE Capstone Project
+ *  Team: 5 Guys One Capstone Project / Pantastic / The Pantastic 5
+ *  Members: Tyler Hendricks, Thomas Forrester, Noal Zyglowicz, Andrew Tam, Kai Wong
+ */
+
+/*
  * FSM.c
  *
  *  Created on: Oct 13, 2021
- *      Author: tyler
+ *      Author: Tyler Hendricks -- 5 Guys One Capstone Project
  */
 #include "FSM.h"
+#include <Drivers.h>
+#include "I2CDriver.h"
+#include <ti/drivers/GPIO.h>
+#include <unistd.h>
 
-//FSM Chart
-//
+/* Driver configuration */
+#include "ti_drivers_config.h"
 
-FSMStateType NextStateFunction(FSMStateType CurrentState, uint16_t temperature)
+/*--------------------------------------------------------------------------------
+Function        :   NextStateFunction
+Purpose         :   Determine the next state for the state machine
+Calls           :   Called in every loop in the main
+Params          :   CurrentState, the FSMStateType indicating which state the machine is currently in
+--------------------------------------------------------------------------------*/
+FSMStateType NextStateFunction(FSMStateType CurrentState)
 {
     FSMStateType NextState = CurrentState; //init NextState so that it is not undefined.
 
-    if(CurrentState == Init){
-
+    switch(CurrentState){
+        case MCUSleep:
+            NextState = FirstTempCheck;
+            break;
+        case FirstTempCheck:
+            if(temperature >= 100){
+                NextState = Activation;
+            }
+            else{
+                NextState = MCUSleep;
+            }
+            break;
+        case Activation:
+            NextState = TempCycle;
+            break;
+        case TempCycle:
+            if(temperature < 100){
+                NextState = Debounce;
+            }
+            else if(alarmFlag){
+                NextState = SoundAlarm;
+            }
+            else{
+                NextState = TempCycle;
+            }
+            break;
+        case SoundAlarm:
+            NextState = TempCycle;
+            break;
+        case Debounce:
+            if(breakDebounceFlag){
+                NextState = TempCycle;
+            }
+            else{
+                NextState = MCUSleep;
+            }
+            breakDebounceFlag = 0;
+//            if(temperature >= 100){
+//                NextState = TempCycle;
+//            }
+//            else if(debounceFlag){
+//                NextState = MCUSleep;
+//            }
+//            else{
+//                NextState = Debounce;
+//            }
+            break;
     }
-    else if(CurrentState == MCUSleep){
 
-    }
-    else if(CurrentState == MCUWake){
-
-    }
-    else if(CurrentState == FirstTempCheck){
-
-    }
-    else if(CurrentState == Activation){
-
-    }
-    else if(CurrentState == TempCycle){
-
-    }
-    else if(CurrentState == SoundAlarm){
-
-    }
-    else if(CurrentState == DisableAlarm){
-
-    }
-    else{ //important to have a default case but this case should never be reached. Maybe trigger a reset if this is hit?
-
-    }
-
+    return NextState;
 }
 
 
-
-
-
-void OutPutFunction(FSMStateType CurrentState)
+/*--------------------------------------------------------------------------------
+Function        :   OutputFunction
+Purpose         :   Determine which operations to run based on the current state
+Calls           :   Called by the main program during every loop
+Params          :   CurrentState, the FSMStateType indicating which state the machine is currently in
+--------------------------------------------------------------------------------*/
+void OutputFunction(FSMStateType CurrentState)
 {
-    //if the current state is stop then the LED will turn off.
-    if(CurrentState == Stop){
-        LaunchPad_LED(LED_OFF);
-    }
-    else{
-        H = PulseBuf[i]; //set how long the LED should be on
-        L = 10000-H; //set how long the LED should be off
-     LaunchPad_LED(LED_ON); //turn on the LED
-     SysTick_Wait1us(H); //Wait high
-     LaunchPad_LED(LED_OFF); //Turn off the LED
-     SysTick_Wait1us(L); //Wait low
-     i = (i+1)%100; //increment or reset i to prevent an index out of bounds error and to keep the cycle running
-
+    int i;
+    switch(CurrentState){
+        case MCUSleep:
+            sleep(15*60); //sleep for 15 minutes before checking again
+            break;
+        case FirstTempCheck:
+            temperature = ReadIR(); //force update the IR sensor
+            break;
+        case Activation:
+            //TODO Init Wifi
+            refreshMatrix(temperature); //turn on the LED matrix according to the temperature
+            startAlarmTimer(); // start the one hour timer
+            break;
+        case TempCycle:
+            temperature = ReadIR();
+            //TODO Update WiFi UI based on value
+            //if sleep drops into low power mode and interferes with wifi, etc, then we can use Timer2
+            sleep(30); //take the temperature every 30 seconds
+            break;
+        case SoundAlarm:
+            alarmOn();
+            break;
+        case Debounce:
+            //trying this instead of other timer module
+            for(i = 0; i < 10; i++){
+                temperature = ReadIR();
+                if(temperature >= 100){
+                    breakDebounceFlag = 1;
+                    return;
+                }
+                sleep(30); //sleep 30 seconds before checking again, state will run for 5 minutes
+            }
+            break;
     }
 
 }
-
-
-
-
