@@ -51,6 +51,8 @@ void initPantastic(void){
     initLaserButton(); //Initialize the button that turns on the laser diode
     initAlarm(); //Initialize the alarm module for sounding the alarm
     initLaser(); //Initialize the laser module for aiming the IR sensor
+    initDebounceTimer(); //Initialize the timer module for the debounce timer
+    initAlarmTimer(); //Initialize the timer module for the alarm timer
 
     debounceFlag = 0; // When set to 1, the FSM can enter MCU sleep
     breakDebounceFlag = 0; //When set to 1, the FSM will break out of debounce
@@ -177,7 +179,7 @@ void alarmOn(void){
     /*
      * TODO: Need to determine how the alarm module will function:
      * Option 1: Square wave- this method will required a toggle and a delay to be called somehwere
-     * Option 2: Active buzzer - this option will required simply setting the pin to high
+     * Option 2: Active buzzer - this option will require simply setting the pin to high
      */
     GPIO_toggle(Alarm); //toggle the state of the alarm
 }

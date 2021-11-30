@@ -23,6 +23,7 @@
 #include <Drivers.h>
 #include "I2CDriver.h"
 #include <ti/drivers/GPIO.h>
+#include <ti/drivers/Timer.h>
 #include <unistd.h>
 
 /* Driver configuration */
@@ -52,10 +53,12 @@ FSMStateType NextStateFunction(FSMStateType CurrentState)
             break;
         case Activation:
             NextState = TempCycle;
+            Timer_start(longHeatTimer);
             break;
         case TempCycle:
             if(temperature < 100){
                 NextState = Debounce;
+                Timer_start(debTimer)
             }
             else if(alarmFlag){
                 NextState = SoundAlarm;
@@ -70,9 +73,12 @@ FSMStateType NextStateFunction(FSMStateType CurrentState)
         case Debounce:
             if(breakDebounceFlag){
                 NextState = TempCycle;
+                Timer_stop(debTimer);
             }
             else{
                 NextState = MCUSleep;
+                Timer_stop(debTimer);
+                Timer_stop(longHeatTimer);
             }
             breakDebounceFlag = 0;
 //            if(temperature >= 100){
@@ -102,18 +108,23 @@ void OutputFunction(FSMStateType CurrentState)
     int i;
     switch(CurrentState){
         case MCUSleep:
+            disableMatrix(); //turn off the matrix
+            flashMatrix(3); //Flash 3 times to indicate state
             sleep(15*60); //sleep for 15 minutes before checking again
             break;
         case FirstTempCheck:
+            flashMatrix(1); //Flash the matrix once to indicate state
             temperature = ReadIR(); //force update the IR sensor
             break;
         case Activation:
             //TODO Init Wifi
+            flashMatrix(2); // Flash twice to indicate state
             refreshMatrix(temperature); //turn on the LED matrix according to the temperature
             startAlarmTimer(); // start the one hour timer
             break;
         case TempCycle:
             temperature = ReadIR();
+            refreshMatrix(temperature); //turn on the LED matrix according to the temperature
             //TODO Update WiFi UI based on value
             //if sleep drops into low power mode and interferes with wifi, etc, then we can use Timer2
             sleep(30); //take the temperature every 30 seconds
