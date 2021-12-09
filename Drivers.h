@@ -38,7 +38,9 @@ void initPantastic(void);
 //--- Module level initialization functions ---
 void initLEDMatrix(void);
 void initAlarmButton(void);
+void HandleAlarmPush(uint_least8_t index);
 void initLaserButton(void);
+void HandleLaserButton(uint_least8_t index);
 void initAlarm(void);
 void initLaser(void);
 
@@ -55,19 +57,19 @@ void flashMatrix(int flashNum);
 void disableMatrix(void);
 void refreshMatrix(double temp);
 
-void initDebounceTimer(void);
 void initAlarmTimer(void);
-void startDebounceTimer(void);
-void stopDebounceTimer(void);
 void startAlarmTimer(void);
 void stopAlarmTimer(void);
 
-//Header values for the timer
-Timer_Handle debTimer;
-Timer_Params paramsDeb;
+void initButtonDebounceTimer(void);
+void buttonDebounceCallback(Timer_Handle myHandle, int_fast16_t status);
 
+//Header values for the timer
 Timer_Handle longHeatTimer;
 Timer_Params paramsAlarm;
+
+Timer_Handle buttonDebounce;
+Timer_Params paramsButton;
 
 void debounceCallback(Timer_Handle myHandle, int_fast16_t status);
 void alarmCallback(Timer_Handle myHandle, int_fast16_t status);

@@ -13,7 +13,7 @@
  *  Members: Tyler Hendricks, Thomas Forrester, Noal Zyglowicz, Andrew Tam, Kai Wong
  */
 
-#define testMode 1
+#define testMode 0
 void testProgram(void); //function that holds tester code
 
 
@@ -37,39 +37,7 @@ void testProgram(void); //function that holds tester code
 /* Driver configuration */
 #include "ti_drivers_config.h"
 
-int laserState = 0;
 
-/*--------------------------------------------------------------------------------
-Function        :   HandleAlarmPush
-Purpose         :   Function that is called by the GPIO interrupt generated when the button is pushed.
-Calls           :   Called by an interrupt handler.
---------------------------------------------------------------------------------*/
-void HandleAlarmPush(void){
-#if testMode
-    alarmOn();
-    delayXus(500000);
-    alarmOff();
-#else
-    alarmOff(); // Turn off the alarm.
-    startAlarmTimer(); //restart the alarm timer
-#endif
-}
-
-/*--------------------------------------------------------------------------------
-Function        :   HandleLaserButton
-Purpose         :   Function that is called by the GPIO interrupt generated when the button is pushed.
-Calls           :   Called by an interrupt handler
---------------------------------------------------------------------------------*/
-void HandleLaserButton(void){
-    if(laserState){ // Checking toggle state
-        laserOff(); // Turn off the laser and toggle the state
-        laserState = 0;
-    }
-    else{
-        laserOn(); // Turn on the laser and toggle the state
-        laserState = 1;
-    }
-}
 
 /*
  *  ======== mainThread ========
@@ -109,11 +77,17 @@ void testProgram(void){
      * 6. Test IR sensor
      */
     initPantastic();
-    double temperature = 0;
-    while(1){
-        flashMatrix(4); // flash 4 times
-        temperature = ReadIR();
 
+    //double temperature = 0;
+
+    while(1){
+        flashMatrix(3); // flash 4 times
+
+        int P15 = GPIO_read(AlarmButton);
+        int P61 = GPIO_read(LaserButton);
+        int P62 = GPIO_read(Alarm);
+
+        temperature = ReadIR();
         //if room temp then light up 3 lights
         if(temperature > 65 && temperature < 78){
             refreshMatrix(210.0);
@@ -121,10 +95,8 @@ void testProgram(void){
         else{ //else light up 1 light
             refreshMatrix(105.0);
         }
+        sleep(3);
 
-        sleep(2);
     }
 
 }
-
-

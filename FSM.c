@@ -12,7 +12,7 @@
  *  Team: 5 Guys One Capstone Project / Pantastic / The Pantastic 5
  *  Members: Tyler Hendricks, Thomas Forrester, Noal Zyglowicz, Andrew Tam, Kai Wong
  */
-
+#define testMode 1
 /*
  * FSM.c
  *
@@ -29,6 +29,7 @@
 /* Driver configuration */
 #include "ti_drivers_config.h"
 
+
 /*--------------------------------------------------------------------------------
 Function        :   NextStateFunction
 Purpose         :   Determine the next state for the state machine
@@ -44,52 +45,49 @@ FSMStateType NextStateFunction(FSMStateType CurrentState)
             NextState = FirstTempCheck;
             break;
         case FirstTempCheck:
+            temperature = ReadIR(); //update temperature
             if(temperature >= 100){
-                NextState = Activation;
+                NextState = Activation; //if temp is over 100, turn on the device
             }
             else{
-                NextState = MCUSleep;
+                NextState = MCUSleep; //else go back to sleep
             }
             break;
         case Activation:
             NextState = TempCycle;
-            Timer_start(longHeatTimer);
             break;
         case TempCycle:
+            temperature = ReadIR(); //update temperature
             if(temperature < 100){
-                NextState = Debounce;
-                Timer_start(debTimer)
+                NextState = Debounce; //if temp has dropped below 100 then go to debounce to check if it actually dropped
             }
             else if(alarmFlag){
-                NextState = SoundAlarm;
+                NextState = SoundAlarm; //if the alarm timer has triggered then sound the alarm
             }
-            else{
+            else{ //return to cycle
                 NextState = TempCycle;
             }
             break;
         case SoundAlarm:
-            NextState = TempCycle;
+            NextState = TempCycle; //even with the alarm on, keep looping
             break;
         case Debounce:
             if(breakDebounceFlag){
-                NextState = TempCycle;
-                Timer_stop(debTimer);
+                NextState = TempCycle; //heat has been detected so reenter cycle
             }
             else{
-                NextState = MCUSleep;
-                Timer_stop(debTimer);
-                Timer_stop(longHeatTimer);
+                NextState = MCUSleep; //no heat has been present so sleep
+                stopAlarmTimer(); //alarm timer not needed when no heat present
+
+                /*
+                 * If the long temperature timer has triggered but the heat source is gone
+                 * then set disable the flag to prevent the alarm from turning on when the device turns back on.
+                 */
+                if(alarmFlag){
+                    alarmFlag = 0;
+                }
             }
-            breakDebounceFlag = 0;
-//            if(temperature >= 100){
-//                NextState = TempCycle;
-//            }
-//            else if(debounceFlag){
-//                NextState = MCUSleep;
-//            }
-//            else{
-//                NextState = Debounce;
-//            }
+            breakDebounceFlag = 0; //reset the flag for the next time debounce is reached.
             break;
     }
 
@@ -110,7 +108,11 @@ void OutputFunction(FSMStateType CurrentState)
         case MCUSleep:
             disableMatrix(); //turn off the matrix
             flashMatrix(3); //Flash 3 times to indicate state
-            sleep(15*60); //sleep for 15 minutes before checking again
+            #if testMode
+                sleep(5); //in test mode sleep for 5 seconds
+            #else
+                sleep(15*60); //sleep for 15 minutes before checking again
+            #endif
             break;
         case FirstTempCheck:
             flashMatrix(1); //Flash the matrix once to indicate state
@@ -127,20 +129,30 @@ void OutputFunction(FSMStateType CurrentState)
             refreshMatrix(temperature); //turn on the LED matrix according to the temperature
             //TODO Update WiFi UI based on value
             //if sleep drops into low power mode and interferes with wifi, etc, then we can use Timer2
-            sleep(30); //take the temperature every 30 seconds
+            #if testMode
+                sleep(3); //sleep 3 seconds in test mode
+            #else
+                sleep(30); //take the temperature every 30 seconds
+            #endif
             break;
         case SoundAlarm:
             alarmOn();
             break;
         case Debounce:
             //trying this instead of other timer module
+            flashMatrix(4);
             for(i = 0; i < 10; i++){
                 temperature = ReadIR();
                 if(temperature >= 100){
                     breakDebounceFlag = 1;
                     return;
                 }
-                sleep(30); //sleep 30 seconds before checking again, state will run for 5 minutes
+                #if testMode
+                    sleep(1);
+                #else
+                    sleep(30); //sleep 30 seconds before checking again, state will run for 5 minutes
+                #endif
+
             }
             break;
     }
