@@ -44,9 +44,9 @@ GPIO_PinConfig gpioPinConfigs[] = {
     /* LED6 */
     GPIOCC32XX_GPIO_28 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
     /* AlarmButton */
-    GPIOCC32XX_GPIO_25 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_FALLING,
+    GPIOCC32XX_GPIO_22 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
     /* LaserButton */
-    GPIOCC32XX_GPIO_31 | GPIO_CFG_IN_NOPULL | GPIO_CFG_IN_INT_FALLING,
+    GPIOCC32XX_GPIO_06 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
     /* LaserDiode */
     GPIOCC32XX_GPIO_00 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
     /* SDA2 */
@@ -55,8 +55,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
     GPIOCC32XX_GPIO_30 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
     /* Alarm */
     GPIOCC32XX_GPIO_07 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-    /* Alarm2 */
-    GPIOCC32XX_GPIO_06 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_MED | GPIO_CFG_OUT_LOW,
+    /* IR_EN */
+    GPIOCC32XX_GPIO_09 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_MED | GPIO_CFG_OUT_LOW,
 };
 
 /*
@@ -67,9 +67,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
  *  reduce memory usage by enabling callback table optimization
  *  (GPIO.optimizeCallbackTableSize = true)
  */
-extern void HandleAlarmPush(uint_least8_t index);
-extern void HandleLaserButton(uint_least8_t index);
-
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
     /* LED1 */
     NULL,
@@ -84,9 +81,9 @@ GPIO_CallbackFxn gpioCallbackFunctions[] = {
     /* LED6 */
     NULL,
     /* AlarmButton */
-    HandleAlarmPush,
+    NULL,
     /* LaserButton */
-    HandleLaserButton,
+    NULL,
     /* LaserDiode */
     NULL,
     /* SDA2 */
@@ -95,7 +92,7 @@ GPIO_CallbackFxn gpioCallbackFunctions[] = {
     NULL,
     /* Alarm */
     NULL,
-    /* Alarm2 */
+    /* IR_EN */
     NULL,
 };
 
@@ -111,7 +108,7 @@ const uint_least8_t LaserDiode_CONST = LaserDiode;
 const uint_least8_t SDA2_CONST = SDA2;
 const uint_least8_t SCL2_CONST = SCL2;
 const uint_least8_t Alarm_CONST = Alarm;
-const uint_least8_t Alarm2_CONST = Alarm2;
+const uint_least8_t IR_EN_CONST = IR_EN;
 
 /*
  *  ======== GPIOCC32XX_config ========
@@ -169,7 +166,7 @@ const PowerCC32XX_ConfigV1 PowerCC32XX_config = {
 #include <ti/devices/cc32xx/inc/hw_ints.h>
 #include <ti/drivers/timer/TimerCC32XX.h>
 
-#define CONFIG_TIMER_COUNT 2
+#define CONFIG_TIMER_COUNT 3
 
 /*
  *  ======== timerCC32XXObjects ========
@@ -192,7 +189,14 @@ const TimerCC32XX_HWAttrs timerCC32XXHWAttrs[CONFIG_TIMER_COUNT] = {
         .baseAddress = TIMERA1_BASE,
         .subTimer    = TimerCC32XX_timer32,
         .intNum      = INT_TIMERA1A,
-        .intPriority = 0x40
+        .intPriority = 0x20
+    },
+    /* ButtonDebounceConifg */
+    {
+        .baseAddress = TIMERA2_BASE,
+        .subTimer    = TimerCC32XX_timer32,
+        .intNum      = INT_TIMERA2A,
+        .intPriority = 0x20
     },
 };
 
@@ -210,10 +214,16 @@ const Timer_Config Timer_config[CONFIG_TIMER_COUNT] = {
         .object      = &timerCC32XXObjects[AlarmTimer],
         .hwAttrs     = &timerCC32XXHWAttrs[AlarmTimer]
     },
+    /* ButtonDebounceConifg */
+    {
+        .object      = &timerCC32XXObjects[ButtonDebounceConifg],
+        .hwAttrs     = &timerCC32XXHWAttrs[ButtonDebounceConifg]
+    },
 };
 
 const uint_least8_t DebounceTimer_CONST = DebounceTimer;
 const uint_least8_t AlarmTimer_CONST = AlarmTimer;
+const uint_least8_t ButtonDebounceConifg_CONST = ButtonDebounceConifg;
 const uint_least8_t Timer_count = CONFIG_TIMER_COUNT;
 
 #include <ti/drivers/power/PowerCC32XX.h>

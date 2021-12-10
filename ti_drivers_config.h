@@ -55,10 +55,10 @@ extern const uint_least8_t              LED5_CONST;
 /* P18 */
 extern const uint_least8_t              LED6_CONST;
 #define LED6                            5
-/* P21 */
+/* P15 */
 extern const uint_least8_t              AlarmButton_CONST;
 #define AlarmButton                     6
-/* P45 */
+/* P61 */
 extern const uint_least8_t              LaserButton_CONST;
 #define LaserButton                     7
 /* P50 */
@@ -73,9 +73,9 @@ extern const uint_least8_t              SCL2_CONST;
 /* P62 */
 extern const uint_least8_t              Alarm_CONST;
 #define Alarm                           11
-/* P61 */
-extern const uint_least8_t              Alarm2_CONST;
-#define Alarm2                          12
+/* P64 */
+extern const uint_least8_t              IR_EN_CONST;
+#define IR_EN                           12
 #define CONFIG_TI_DRIVERS_GPIO_COUNT    13
 
 /* LEDs are active high */
@@ -94,7 +94,9 @@ extern const uint_least8_t                  DebounceTimer_CONST;
 #define DebounceTimer                       0
 extern const uint_least8_t                  AlarmTimer_CONST;
 #define AlarmTimer                          1
-#define CONFIG_TI_DRIVERS_TIMER_COUNT       2
+extern const uint_least8_t                  ButtonDebounceConifg_CONST;
+#define ButtonDebounceConifg                2
+#define CONFIG_TI_DRIVERS_TIMER_COUNT       3
 
 /*
  *  ======== Board_init ========
