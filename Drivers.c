@@ -55,6 +55,8 @@ volatile int alarmButtonFlag;
  */
 #define testMode 1
 #define btnInterruptMode 0
+#define smallMatrixMode 1 //when set the matrix range will be 100-150 instead of 100-350
+
 
 
 /*--------------------------------------------------------------------------------
@@ -427,50 +429,97 @@ Pre-req         :   Must be initialized first.
 Configuration   :   Pins set as output, drive strength high, low
 --------------------------------------------------------------------------------*/
 void refreshMatrix(double temp){
-    //If temp is above base threshold, turn on the first LED, else turn off all LEDs
-    if(temp < 100){
-        disableMatrix();
-        return;
-    }
-    else{
-        GPIO_write(LED1, 1);
-    }
+    #if smallMatrixMode
+        //If temp is above base threshold, turn on the first LED, else turn off all LEDs
+        if(temp < 100){
+            disableMatrix();
+            return;
+        }
+        else{
+            GPIO_write(LED1, 1);
+        }
 
-    // If temp is above 150, LED1 is on and LED2 will turn on, else LED2 will be turned off
-    if(temp > 150){
-        GPIO_write(LED2, 1);
-    }
-    else{
-        GPIO_write(LED2, 0);
-    }
+        // If temp is above 150, LED1 is on and LED2 will turn on, else LED2 will be turned off
+        if(temp > 110){
+            GPIO_write(LED2, 1);
+        }
+        else{
+            GPIO_write(LED2, 0);
+        }
 
-    //If temp is above 200, LED1, LED2 are on and LED3 will turn on, else LED3 will be turned off
-    if(temp > 200){
-        GPIO_write(LED3, 1);
-    }
-    else{
-        GPIO_write(LED3, 0);
-    }
+        //If temp is above 200, LED1, LED2 are on and LED3 will turn on, else LED3 will be turned off
+        if(temp > 120){
+            GPIO_write(LED3, 1);
+        }
+        else{
+            GPIO_write(LED3, 0);
+        }
 
-    if(temp > 250){
-        GPIO_write(LED4, 1);
-    }
-    else{
-        GPIO_write(LED4, 0);
-    }
+        if(temp > 130){
+            GPIO_write(LED4, 1);
+        }
+        else{
+            GPIO_write(LED4, 0);
+        }
 
-    if(temp > 300){
-        GPIO_write(LED5, 1);
-    }
-    else{
-        GPIO_write(LED5, 0);
-    }
-    if(temp > 350){
-        GPIO_write(LED6, 1);
-    }
-    else{
-        GPIO_write(LED6, 0);
-    }
+        if(temp > 140){
+            GPIO_write(LED5, 1);
+        }
+        else{
+            GPIO_write(LED5, 0);
+        }
+        if(temp > 150){
+            GPIO_write(LED6, 1);
+        }
+        else{
+            GPIO_write(LED6, 0);
+        }
+    #else
+        //If temp is above base threshold, turn on the first LED, else turn off all LEDs
+        if(temp < 100){
+            disableMatrix();
+            return;
+        }
+        else{
+            GPIO_write(LED1, 1);
+        }
+
+        // If temp is above 150, LED1 is on and LED2 will turn on, else LED2 will be turned off
+        if(temp > 150){
+            GPIO_write(LED2, 1);
+        }
+        else{
+            GPIO_write(LED2, 0);
+        }
+
+        //If temp is above 200, LED1, LED2 are on and LED3 will turn on, else LED3 will be turned off
+        if(temp > 200){
+            GPIO_write(LED3, 1);
+        }
+        else{
+            GPIO_write(LED3, 0);
+        }
+
+        if(temp > 250){
+            GPIO_write(LED4, 1);
+        }
+        else{
+            GPIO_write(LED4, 0);
+        }
+
+        if(temp > 300){
+            GPIO_write(LED5, 1);
+        }
+        else{
+            GPIO_write(LED5, 0);
+        }
+        if(temp > 350){
+            GPIO_write(LED6, 1);
+        }
+        else{
+            GPIO_write(LED6, 0);
+        }
+    #endif
 }
 
 /*--------------------------------------------------------------------------------

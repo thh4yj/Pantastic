@@ -52,7 +52,6 @@ void *mainThread(void *arg0){
 
     //Initialize into the first temperature check state
     FSMStateType CurrentState = FirstTempCheck;
-
     while(1){
         CurrentState = NextStateFunction(CurrentState);
         OutputFunction(CurrentState);

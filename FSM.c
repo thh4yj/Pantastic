@@ -120,6 +120,7 @@ void OutputFunction(FSMStateType CurrentState)
             break;
         case Activation:
             //TODO Init Wifi
+
             flashMatrix(2); // Flash twice to indicate state
             refreshMatrix(temperature); //turn on the LED matrix according to the temperature
             startAlarmTimer(); // start the one hour timer
@@ -128,6 +129,7 @@ void OutputFunction(FSMStateType CurrentState)
             temperature = ReadIR();
             refreshMatrix(temperature); //turn on the LED matrix according to the temperature
             //TODO Update WiFi UI based on value
+
             //if sleep drops into low power mode and interferes with wifi, etc, then we can use Timer2
             #if testMode
                 sleep(3); //sleep 3 seconds in test mode

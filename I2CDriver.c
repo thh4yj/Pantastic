@@ -120,6 +120,10 @@ void I2C_Init(void){
   */
  GPIO_setConfig(SCL2, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE);
  GPIO_setConfig(SDA2, GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE);
+
+ //Initialize the IR enable pin for the voltage regulator. This must be high for it to work
+ GPIO_setConfig(IR_EN, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_HIGH);
+ GPIO_write(IR_EN, 1);
 }
 
 /*--------------------------------------------------------------------------------
@@ -247,14 +251,15 @@ void I2C_WriteData(unsigned char *Data, unsigned char DeviceAddr, unsigned char 
 {
   unsigned char nIndex;
   I2C_Start();
-  I2C_WriteByte(DeviceAddr << 1);  // byDeviceAddr is 7 bit and command is write
-  I2C_WriteByte(Register);
+  I2C_WriteByte(DeviceAddr);  // byDeviceAddr is 7 bit and command is write
+  //I2C_WriteByte(Register);
+  I2C_Delay();                 // Short delay
 
   for(nIndex = 0; nIndex < nLength; nIndex++)
   {
     I2C_WriteByte(*(Data + nIndex));
   }
-  I2C_Readbit();
+  //I2C_Readbit();
   I2C_Stop();
 }
 
@@ -319,7 +324,3 @@ double ReadIR(void){
     free(buff); //deallocate the memory to prevent a segmentation fault
     return output;
 }
-
-
-
-

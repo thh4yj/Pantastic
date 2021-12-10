@@ -24,6 +24,8 @@
 #ifndef I2CDRIVER_H_
 #define I2CDRIVER_H_
 
+#include <stdint.h>
+
 /********************************************************************************
  * ORIGINAL FILE INFORMATION
 Module      : I2C_SW
