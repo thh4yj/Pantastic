@@ -25,6 +25,13 @@
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/Timer.h>
 #include <unistd.h>
+#include <WiFi.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+extern int networkReadyFlag;
 
 /* Driver configuration */
 #include "ti_drivers_config.h"
@@ -35,7 +42,66 @@ Function        :   NextStateFunction
 Purpose         :   Determine the next state for the state machine
 Calls           :   Called in every loop in the main
 Params          :   CurrentState, the FSMStateType indicating which state the machine is currently in
+
 --------------------------------------------------------------------------------*/
+
+//Helper function to convert double to char array
+void reverse(char* str, int len)
+{
+    int i = 0, j = len - 1, temp;
+    while (i < j) {
+        temp = str[i];
+        str[i] = str[j];
+        str[j] = temp;
+        i++;
+        j--;
+    }
+}
+
+//Helper function to convert double to char array
+int intToStr(int x, char str[], int d)
+{
+    int i = 0;
+    while (x) {
+        str[i++] = (x % 10) + '0';
+        x = x / 10;
+    }
+
+    // If number of digits required is more, then
+    // add 0s at the beginning
+    while (i < d)
+        str[i++] = '0';
+
+    reverse(str, i);
+    str[i] = '\0';
+    return i;
+}
+
+// Converts a floating-point/double number to a string.
+void ftoa(float n, char* res, int afterpoint)
+{
+    // Extract integer part
+    int ipart = (int)n;
+
+    // Extract floating part
+    float fpart = n - (float)ipart;
+
+    // convert integer part to string
+    int i = intToStr(ipart, res, 0);
+
+    // check for display option after point
+    if (afterpoint != 0) {
+        res[i] = '.'; // add dot
+
+        // Get the value of fraction part upto given no.
+        // of points after dot. The third parameter
+        // is needed to handle cases like 233.007
+        fpart = fpart * pow(10, afterpoint);
+
+        intToStr((int)fpart, res + i + 1, afterpoint);
+    }
+}
+
 FSMStateType NextStateFunction(FSMStateType CurrentState)
 {
     FSMStateType NextState = CurrentState; //init NextState so that it is not undefined.
@@ -46,8 +112,16 @@ FSMStateType NextStateFunction(FSMStateType CurrentState)
             break;
         case FirstTempCheck:
             temperature = ReadIR(); //update temperature
+            if(networkReadyFlag){
+                char temperatureCharData[10];
+                ftoa(temperature, temperatureCharData, 1); //convert double to char array
+                char newTemperatureCharData[10] =  {temperatureCharData[0], temperatureCharData[1], temperatureCharData[2], temperatureCharData[3], '\0'}; //convert char array to string literal
+                strcpy(newTemperatureCharData, temperatureCharData); //copy into new char array because string literal not mutable
+                SendData(newTemperatureCharData); //send string literal to create http task thread
+            }
             if(temperature >= 100){
                 NextState = Activation; //if temp is over 100, turn on the device
+                //Connect(&connectionFlag); //connect to the WiFi TODO do we need to disconnect or should we remain connected?
             }
             else{
                 NextState = MCUSleep; //else go back to sleep
@@ -58,6 +132,13 @@ FSMStateType NextStateFunction(FSMStateType CurrentState)
             break;
         case TempCycle:
             temperature = ReadIR(); //update temperature
+            if(networkReadyFlag){
+                char temperatureCharData[10];
+                ftoa(temperature, temperatureCharData, 1);
+                char newTemperatureCharData[10] =  {temperatureCharData[0], temperatureCharData[1], temperatureCharData[2], temperatureCharData[3], '\0'};
+                strcpy(newTemperatureCharData, temperatureCharData);
+                SendData(newTemperatureCharData);
+            }
             if(temperature < 100){
                 NextState = Debounce; //if temp has dropped below 100 then go to debounce to check if it actually dropped
             }
