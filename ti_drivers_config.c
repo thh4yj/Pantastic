@@ -18,6 +18,104 @@
 #include "ti_drivers_config.h"
 
 /*
+ *  ============================= Display =============================
+ */
+
+#include <ti/display/Display.h>
+#include <ti/display/DisplayUart.h>
+
+#define CONFIG_Display_COUNT 1
+
+#define Display_UARTBUFFERSIZE 1024
+static char displayUARTBuffer[Display_UARTBUFFERSIZE];
+
+DisplayUart_Object displayUartObject;
+
+const DisplayUart_HWAttrs displayUartHWAttrs = {
+    .uartIdx      = CONFIG_UART_0,
+    .baudRate     = 115200,
+    .mutexTimeout = (unsigned int)(-1),
+    .strBuf       = displayUARTBuffer,
+    .strBufLen    = Display_UARTBUFFERSIZE
+};
+
+const Display_Config Display_config[CONFIG_Display_COUNT] = {
+    /* CONFIG_Display_0 */
+    /* XDS110 UART */
+    {
+        .fxnTablePtr = &DisplayUartMin_fxnTable,
+        .object      = &displayUartObject,
+        .hwAttrs     = &displayUartHWAttrs
+    },
+};
+
+const uint_least8_t Display_count = CONFIG_Display_COUNT;
+
+/*
+ *  =============================== Crypto ===============================
+ */
+
+#include <ti/drivers/crypto/CryptoCC32XX.h>
+
+/*
+ *  ======== CryptoCC32XXObjects ========
+ */
+#define CONFIG_Crypto_COUNT 1
+CryptoCC32XX_Object cryptoCC32XXObjects[CONFIG_Crypto_COUNT];
+
+/*
+ *  ======== Crypto_config ========
+ */
+const CryptoCC32XX_Config CryptoCC32XX_config[CONFIG_Crypto_COUNT] = {
+    /* CONFIG_Crypto_0 */
+    {
+        .object = &cryptoCC32XXObjects[CONFIG_Crypto_0],
+    },
+};
+
+const uint_least8_t CONFIG_Crypto_0_CONST = CONFIG_Crypto_0;
+const uint_least8_t CryptoCC32XX_count = CONFIG_Crypto_COUNT;
+
+/*
+ *  =============================== DMA ===============================
+ */
+
+#include <ti/drivers/dma/UDMACC32XX.h>
+#include <ti/devices/cc32xx/inc/hw_ints.h>
+#include <ti/devices/cc32xx/inc/hw_types.h>
+#include <ti/devices/cc32xx/driverlib/rom_map.h>
+#include <ti/devices/cc32xx/driverlib/udma.h>
+
+/* Ensure DMA control table is aligned as required by the uDMA Hardware */
+static tDMAControlTable dmaControlTable[64] __attribute__ ((aligned (1024)));
+
+/* This is the handler for the uDMA error interrupt. */
+static void dmaErrorFxn(uintptr_t arg)
+{
+    int status = MAP_uDMAErrorStatusGet();
+    MAP_uDMAErrorStatusClear();
+
+    /* Suppress unused variable warning */
+    (void)status;
+
+    while (1);
+}
+
+UDMACC32XX_Object udmaCC3220SObject;
+
+const UDMACC32XX_HWAttrs udmaCC3220SHWAttrs = {
+    .controlBaseAddr = (void *)dmaControlTable,
+    .dmaErrorFxn     = (UDMACC32XX_ErrorFxn)dmaErrorFxn,
+    .intNum          = INT_UDMAERR,
+    .intPriority     = (~0)
+};
+
+const UDMACC32XX_Config UDMACC32XX_config = {
+    .object  = &udmaCC3220SObject,
+    .hwAttrs = &udmaCC3220SHWAttrs
+};
+
+/*
  *  =============================== GPIO ===============================
  */
 
@@ -158,6 +256,98 @@ const PowerCC32XX_ConfigV1 PowerCC32XX_config = {
 };
 
 /*
+ *  =============================== SPI ===============================
+ */
+
+#include <ti/drivers/SPI.h>
+#include <ti/drivers/spi/SPICC32XXDMA.h>
+
+#include <ti/devices/cc32xx/inc/hw_ints.h>
+#include <ti/devices/cc32xx/inc/hw_memmap.h>
+#include <ti/devices/cc32xx/inc/hw_types.h>
+#include <ti/devices/cc32xx/driverlib/prcm.h>
+#include <ti/devices/cc32xx/driverlib/spi.h>
+#include <ti/devices/cc32xx/driverlib/udma.h>
+
+#define CONFIG_SPI_COUNT 2
+
+/*
+ *  ======== spiCC32XXDMAObjects ========
+ */
+SPICC32XXDMA_Object spiCC32XXDMAObjects[CONFIG_SPI_COUNT];
+
+uint32_t spiCC32XXSDMAscratchBuf[CONFIG_SPI_COUNT];
+
+/*
+ *  ======== spiCC32XXDMAHWAttrs ========
+ */
+const SPICC32XXDMA_HWAttrsV1 spiCC32XXDMAHWAttrs[CONFIG_SPI_COUNT] = {
+    /* CONFIG_NWP_SPI */
+    /* Network Processor SPI Bus */
+    {
+        .baseAddr = LSPI_BASE,
+        .intNum = INT_LSPI,
+        .intPriority = (~0),
+        .spiPRCM = PRCM_LSPI,
+        .csControl = SPI_SW_CTRL_CS,
+        .csPolarity = SPI_CS_ACTIVEHIGH,
+        .pinMode = SPI_4PIN_MODE,
+        .turboMode = SPI_TURBO_OFF,
+        .scratchBufPtr = &spiCC32XXSDMAscratchBuf[CONFIG_NWP_SPI],
+        .defaultTxBufValue = 0,
+        .rxChannelIndex = UDMA_CH12_LSPI_RX,
+        .txChannelIndex = UDMA_CH13_LSPI_TX,
+        .minDmaTransferSize = 100,
+        .mosiPin = SPICC32XXDMA_PIN_NO_CONFIG,
+        .misoPin = SPICC32XXDMA_PIN_NO_CONFIG,
+        .clkPin  = SPICC32XXDMA_PIN_NO_CONFIG,
+        .csPin  = SPICC32XXDMA_PIN_NO_CONFIG
+    },
+    /* GSPI */
+    {
+        .baseAddr = GSPI_BASE,
+        .intNum = INT_GSPI,
+        .intPriority = (~0),
+        .spiPRCM = PRCM_GSPI,
+        .csControl = SPI_HW_CTRL_CS,
+        .csPolarity = SPI_CS_ACTIVELOW,
+        .pinMode = SPI_3PIN_MODE,
+        .turboMode = SPI_TURBO_OFF,
+        .scratchBufPtr = &spiCC32XXSDMAscratchBuf[CONFIG_SPI_0],
+        .defaultTxBufValue = ~0,
+        .rxChannelIndex = UDMA_CH30_GSPI_RX,
+        .txChannelIndex = UDMA_CH31_GSPI_TX,
+        .minDmaTransferSize = 10,
+        .mosiPin = SPICC32XXDMA_PIN_52_MOSI,
+        .misoPin = SPICC32XXDMA_PIN_53_MISO,
+        .clkPin  = SPICC32XXDMA_PIN_45_CLK,
+        .csPin  = SPICC32XXDMA_PIN_NO_CONFIG
+    },
+};
+
+/*
+ *  ======== SPI_config ========
+ */
+const SPI_Config SPI_config[CONFIG_SPI_COUNT] = {
+    /* CONFIG_NWP_SPI */
+    {
+        .fxnTablePtr = &SPICC32XXDMA_fxnTable,
+        .object = &spiCC32XXDMAObjects[CONFIG_NWP_SPI],
+        .hwAttrs = &spiCC32XXDMAHWAttrs[CONFIG_NWP_SPI]
+    },
+    /* CONFIG_SPI_0 */
+    {
+        .fxnTablePtr = &SPICC32XXDMA_fxnTable,
+        .object = &spiCC32XXDMAObjects[CONFIG_SPI_0],
+        .hwAttrs = &spiCC32XXDMAHWAttrs[CONFIG_SPI_0]
+    },
+};
+
+const uint_least8_t CONFIG_SPI_0_CONST = CONFIG_SPI_0;
+const uint_least8_t CONFIG_NWP_SPI_CONST = CONFIG_NWP_SPI;
+const uint_least8_t SPI_count = CONFIG_SPI_COUNT;
+
+/*
  *  =============================== Timer ===============================
  */
 
@@ -225,6 +415,89 @@ const uint_least8_t DebounceTimer_CONST = DebounceTimer;
 const uint_least8_t AlarmTimer_CONST = AlarmTimer;
 const uint_least8_t ButtonDebounceConifg_CONST = ButtonDebounceConifg;
 const uint_least8_t Timer_count = CONFIG_TIMER_COUNT;
+
+/*
+ *  =============================== UART ===============================
+ */
+
+#include <ti/drivers/UART.h>
+#include <ti/devices/cc32xx/inc/hw_ints.h>
+#include <ti/devices/cc32xx/inc/hw_memmap.h>
+#include <ti/drivers/uart/UARTCC32XXDMA.h>
+
+#define CONFIG_UART_COUNT 1
+
+#define UART0_BASE UARTA0_BASE
+#define UART1_BASE UARTA1_BASE
+#define INT_UART0  INT_UARTA0
+#define INT_UART1  INT_UARTA1
+
+
+UARTCC32XXDMA_Object uartCC32XXObjects0;
+
+static const UARTCC32XXDMA_HWAttrsV1 uartCC32XXHWAttrs0 = {
+    .baseAddr           = UART0_BASE,
+    .intNum             = INT_UART0,
+    .intPriority        = (~0),
+    .flowControl        = UARTCC32XXDMA_FLOWCTRL_NONE,
+    .rxChannelIndex     = UDMA_CH8_UARTA0_RX,
+    .txChannelIndex     = UDMA_CH9_UARTA0_TX,
+    .rxPin              = UARTCC32XXDMA_PIN_57_UART0_RX,
+    .txPin              = UARTCC32XXDMA_PIN_55_UART0_TX,
+    .ctsPin             = UARTCC32XXDMA_PIN_UNASSIGNED,
+    .rtsPin             = UARTCC32XXDMA_PIN_UNASSIGNED,
+    .errorFxn           = NULL
+  };
+
+const UART_Config UART_config[CONFIG_UART_COUNT] = {
+    {   /* CONFIG_UART_0 */
+        .fxnTablePtr = &UARTCC32XXDMA_fxnTable,
+        .object      = &uartCC32XXObjects0,
+        .hwAttrs     = &uartCC32XXHWAttrs0
+    },
+};
+
+const uint_least8_t CONFIG_UART_0_CONST = CONFIG_UART_0;
+const uint_least8_t UART_count = CONFIG_UART_COUNT;
+
+
+/*
+ *  =============================== Watchdog ===============================
+ */
+
+#include <ti/drivers/Watchdog.h>
+#include <ti/drivers/watchdog/WatchdogCC32XX.h>
+#include <ti/devices/cc32xx/inc/hw_memmap.h>
+#include <ti/devices/cc32xx/inc/hw_ints.h>
+#include <ti/devices/cc32xx/inc/hw_types.h>
+#include <ti/devices/cc32xx/driverlib/wdt.h>
+
+#define CONFIG_WATCHDOG_COUNT 1
+
+WatchdogCC32XX_Object watchdogCC32XXObjects[CONFIG_WATCHDOG_COUNT];
+
+const WatchdogCC32XX_HWAttrs
+    watchdogCC32XXHWAttrs[CONFIG_WATCHDOG_COUNT] = {
+    /* CONFIG_WATCHDOG_0: period = 1000 */
+    {
+        .baseAddr    = WDT_BASE,
+        .intNum      = INT_WDT,
+        .intPriority = 0x20,
+        .reloadValue = 80000000
+    },
+};
+
+const Watchdog_Config Watchdog_config[CONFIG_WATCHDOG_COUNT] = {
+    /* CONFIG_WATCHDOG_0 */
+    {
+        .fxnTablePtr = &WatchdogCC32XX_fxnTable,
+        .object      = &watchdogCC32XXObjects[CONFIG_WATCHDOG_0],
+        .hwAttrs     = &watchdogCC32XXHWAttrs[CONFIG_WATCHDOG_0]
+    }
+};
+
+const uint_least8_t CONFIG_WATCHDOG_0_CONST = CONFIG_WATCHDOG_0;
+const uint_least8_t Watchdog_count = CONFIG_WATCHDOG_COUNT;
 
 #include <ti/drivers/power/PowerCC32XX.h>
 

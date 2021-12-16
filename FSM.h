@@ -45,6 +45,12 @@ extern int breakDebounceFlag; //When set to 1, the FSM will break out of debounc
 extern int alarmFlag; // When set to 1, the alarm will ring during the temp cycle
 extern int alarmCycle;
 
+/*
+ * WiFi
+ */
+int connectionFlag;
+extern void Connect(int * flag);
+
 
 
 

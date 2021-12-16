@@ -34,6 +34,14 @@ extern "C" {
 
 
 /*
+ *  ======== Crypto ========
+ */
+
+extern const uint_least8_t                  CONFIG_Crypto_0_CONST;
+#define CONFIG_Crypto_0                     0
+#define CONFIG_TI_DRIVERS_CRYPTO_COUNT      1
+
+/*
  *  ======== GPIO ========
  */
 
@@ -87,6 +95,22 @@ extern const uint_least8_t              IR_EN_CONST;
 
 
 /*
+ *  ======== SPI ========
+ */
+
+extern const uint_least8_t              CONFIG_NWP_SPI_CONST;
+#define CONFIG_NWP_SPI                  0
+/*
+ *  MOSI: P52
+ *  MISO: P53
+ *  SCLK: P45
+ */
+extern const uint_least8_t              CONFIG_SPI_0_CONST;
+#define CONFIG_SPI_0                    1
+#define CONFIG_TI_DRIVERS_SPI_COUNT     2
+
+
+/*
  *  ======== Timer ========
  */
 
@@ -97,6 +121,29 @@ extern const uint_least8_t                  AlarmTimer_CONST;
 extern const uint_least8_t                  ButtonDebounceConifg_CONST;
 #define ButtonDebounceConifg                2
 #define CONFIG_TI_DRIVERS_TIMER_COUNT       3
+
+/*
+ *  ======== UART ========
+ */
+
+/*
+ *  TX: P55
+ *  RX: P57
+ *  XDS110 UART
+ */
+extern const uint_least8_t              CONFIG_UART_0_CONST;
+#define CONFIG_UART_0                   0
+#define CONFIG_TI_DRIVERS_UART_COUNT    1
+
+
+/*
+ *  ======== Watchdog ========
+ */
+
+extern const uint_least8_t                  CONFIG_WATCHDOG_0_CONST;
+#define CONFIG_WATCHDOG_0                   0
+#define CONFIG_TI_DRIVERS_WATCHDOG_COUNT    1
+
 
 /*
  *  ======== Board_init ========
